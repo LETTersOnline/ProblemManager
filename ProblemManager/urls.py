@@ -28,5 +28,9 @@ urlpatterns = [
 ]
 
 router = DefaultRouter()
-router.register(r'problems', ProblemModelViewSet, basename='problem')
+
+router.register(r'problems', ProblemViewSet, basename='problems')
+# router.register(r'contests', ContestViewSet, basename='contests')
+router.register(r'teams', TeamViewSet, basename='teams')
+router.register(r'members', MemberViewSet, basename='members')
 urlpatterns += router.urls
