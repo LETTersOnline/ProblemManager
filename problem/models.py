@@ -22,7 +22,7 @@ class Team(Model):
         return reverse('teams-detail', args=[str(self.id)])
 
     def __str__(self):
-        return self.name
+        return '{}(id={})'.format(self.name, self.id)
 
 
 class Problem(Model):

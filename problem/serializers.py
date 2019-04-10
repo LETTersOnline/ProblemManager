@@ -93,16 +93,18 @@ class ContestSerializer(serializers.HyperlinkedModelSerializer):
             'url': {'view_name': 'contests-detail'}
         }
 
-    score = RangeSerializer(write_only=True, allow_null=True, help_text='难度值范围')
-    submit = RangeSerializer(write_only=True, allow_null=True, help_text='提交数量范围')
-    accept = RangeSerializer(write_only=True, allow_null=True, help_text='通过数量范围')
-    ac_rate_in_percent = RangeSerializer(write_only=True, allow_null=True, help_text='通过率百分比范围')
+    score = RangeSerializer(write_only=True, required=False, help_text='难度值范围')
+    submit = RangeSerializer(write_only=True, required=False, help_text='提交数量范围')
+    accept = RangeSerializer(write_only=True, required=False, help_text='通过数量范围')
+    ac_rate_in_percent = RangeSerializer(write_only=True, required=False, help_text='通过率百分比范围')
 
-    problem_cnt = serializers.IntegerField(write_only=True, help_text='需要的题目数量，范围参数取并集')
-    ignore_date = serializers.DateField(allow_null=True, write_only=True)
+    problem_cnt = serializers.IntegerField(write_only=True, help_text='需要的题目数量')
+    ignore_date = serializers.DateField(required=False, write_only=True)
 
     problems = serializers.HyperlinkedRelatedField(many=True, read_only=True, view_name='problems-detail')
-    team = serializers.HyperlinkedRelatedField(read_only=True, view_name='teams-detail')
+    # team = serializers.SlugRelatedField(queryset=Team.objects.all(), slug_field='name')
+    team = serializers.PrimaryKeyRelatedField(queryset=Team.objects.all())
+    # team = serializers.HyperlinkedRelatedField(read_only=True, view_name='teams-detail')
 
     def create(self, validated_data):
         team = validated_data['team']
@@ -117,9 +119,10 @@ class ContestSerializer(serializers.HyperlinkedModelSerializer):
         record_queryset = Record.objects.all() \
             if not ignore_date else Record.objects.filter(create_time__gte=ignore_date)
 
-        for member in team.members:
+        for member in team.members.all():
             # 难度值，difficult_number字段中不等于-1进行过滤
-            qs = record_queryset.filter(team__in=member.teams)
+            tol_team_ids = [item.id for item in member.teams.all()]
+            qs = record_queryset.filter(team__id__in=tol_team_ids)
             q_object = Q()
             if score is not None:
                 q_score = Q(problem__difficult_number__gte=score['lower'],
