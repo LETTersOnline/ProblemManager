@@ -2,12 +2,17 @@ from ojcrawler.control import Controller
 
 from .models import Problem
 
+
 class CrawlerController:
     controller = Controller()
 
     @staticmethod
     def get_controller():
         return CrawlerController.controller
+
+
+def clear_problems():
+    Problem.objects.all().delete()
 
 
 def update_problem(oj_name, pid):
