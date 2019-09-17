@@ -54,7 +54,7 @@ class CustomAPIRootView(APIRootView):
         )
         ret['update HDU problem'] = reverse(
             'update-problem',
-            args=('HDU', '1000'),
+            args=('hdu', '1000'),
             kwargs=kwargs,
             request=request,
             format=kwargs.get('format', None)
@@ -77,7 +77,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     # path('api-auth/', include('rest_framework.urls')),
 
-    path('problems/update/<oj_name>/<pid>/', update_problem, name='update-problem'),
+    path('problems/update/<oj_name>/<pid>/', api_update_problem, name='update-problem'),
 ]
 
 router = CustomRouter()
