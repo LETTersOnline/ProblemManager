@@ -35,6 +35,8 @@ class Problem(Model):
     origin_link = models.URLField(default='http://codeforces.com')
     content = JSONField(default=dict)
 
+    problem_tags = models.TextField(null=True)
+
     def __str__(self):
         return '{}-{}'.format(self.oj, self.pid)
 
@@ -60,3 +62,11 @@ class Contest(Model):
 
     def get_absolute_url(self):
         return reverse('contests-detail', args=[str(self.id)])
+
+
+class Tag(Model):
+    name = models.CharField(max_length=128, primary_key=True)
+    problems = models.ManyToManyField(Problem, related_name='tags')
+
+    def __str__(self):
+        return self.name
