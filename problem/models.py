@@ -17,6 +17,7 @@ class Member(Model):
 class Team(Model):
     name = models.CharField(max_length=255)
     members = models.ManyToManyField(Member, related_name='teams')
+    active = models.BooleanField()
 
     def get_absolute_url(self):
         return reverse('teams-detail', args=[str(self.id)])
@@ -36,6 +37,11 @@ class Problem(Model):
     content = JSONField(default=dict)
 
     problem_tags = models.TextField(null=True)
+    solved_teams = models.ManyToManyField(
+        Team,
+        through='Record',
+        through_fields=('problem', 'team')
+    )
 
     def __str__(self):
         return '{}-{}'.format(self.oj, self.pid)

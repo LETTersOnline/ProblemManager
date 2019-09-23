@@ -1,3 +1,4 @@
+from django.contrib import admin
 from ojcrawler.control import Controller
 
 from .models import Problem

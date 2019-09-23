@@ -1,56 +1,8 @@
 from django.contrib import admin
+from django.db.models.query import Q
 
 from problem.models import Team, Member, Problem, Record
-
-
-class PercentageFilterMixin(admin.SimpleListFilter):
-
-    def lookups(self, request, model_admin):
-        return (
-                (0, '[0%, 20%)'),
-                (1, '[20%, 40%)'),
-                (2, '[40%, 60%)'),
-                (3, '[60%, 80%)'),
-                (4, '[80%, 100%)')
-        )
-
-    def queryset(self, request, queryset):
-        if self.value() is None:
-            return queryset
-        left, right = 20 * int(self.value()), 20 * (int(self.value()) + 1)
-        return queryset.filter(**{self.parameter_name + '__gte': left, self.parameter_name + '__lte': right})
-
-
-class IntervalFilterMixin(admin.SimpleListFilter):
-
-    min_val = 0
-    max_val = 3000
-    number_of_intervals = 10
-
-    def get_interval_length(self):
-        return (self.max_val - self.min_val) // self.number_of_intervals
-
-    def lookups(self, request, model_admin):
-        interval_length = self.get_interval_length()
-        return (((-1, '-1'),) +
-                tuple((i, f'[{i * interval_length}, {(i + 1) * interval_length})')
-                      for i in range(self.number_of_intervals - 1)) +
-                ((self.number_of_intervals - 1, f'[{(self.number_of_intervals - 1) * interval_length}, {self.max_val})'),)
-                )
-
-    def queryset(self, request, queryset):
-        if self.value() is None:
-            return queryset
-
-        val = int(self.value())
-        if val == -1:
-            return queryset.filter(**{self.parameter_name: val})
-
-        interval_length = self.get_interval_length()
-        left, right = val * interval_length, (val + 1) * interval_length
-        if val == self.number_of_intervals - 1:
-            right = self.max_val
-        return queryset.filter(**{self.parameter_name + '__gte': left, self.parameter_name + '__lt': right})
+from problem.filters import PercentageFilterMixin, IntervalFilterMixin
 
 
 class ACRatePercentageFilter(PercentageFilterMixin):
@@ -64,14 +16,61 @@ class DifficultNumberIntervalFilter(IntervalFilterMixin):
     title = 'Difficult Number Interval Filter'
     parameter_name = 'difficult_number'
 
-    min_val = 0
-    max_val = 3000
+    interval_size = 300
     number_of_intervals = 10
+
+
+class AcceptNumberIntervalFilter(IntervalFilterMixin):
+
+    title = 'Accept Number Interval Filter'
+    parameter_name = 'accepted_number'
+
+    interval_size = 10000
+    number_of_intervals = 10
+
+
+class ProblemSolvedByTeamFilter(admin.SimpleListFilter):
+
+    title = 'Team With Solved Problem'
+    parameter_name = 'solved_teams'
+
+    def lookups(self, request, model_admin):
+        return ((team.name, team.name) for team in Team.objects.all())
+
+    def queryset(self, request, queryset):
+        if self.value() is None:
+            return queryset
+        return queryset.filter(solved_teams__name=self.value())
+
+
+class ProblemUnSolvedByTeamFilter(admin.SimpleListFilter):
+
+    title = 'Team With Unsolved Problem'
+    parameter_name = 'unsolved_teams'
+
+    def lookups(self, request, model_admin):
+        return ((team.name, team.name) for team in Team.objects.all())
+
+    def queryset(self, request, queryset):
+        if self.value() is None:
+            return queryset
+        return queryset.filter(~Q(solved_teams__name=self.value()))
+
+
+def create_record(modeladmin, request, queryset):
+    team = Team.objects.filter(active=True).first()
+    for problem in queryset:
+        Record.objects.create(problem=problem, team=team)
+
+
+create_record.short_description = "Create a Record on problem selected with current active team"
 
 
 @admin.register(Team)
 class TeamAdmin(admin.ModelAdmin):
-    pass
+
+    list_display = ('name', 'active')
+    autocomplete_fields = ('members',)
 
 
 @admin.register(Problem)
@@ -79,17 +78,24 @@ class ProblemAdmin(admin.ModelAdmin):
     list_display = ('__str__', 'accepted_number', 'submitted_number', 'difficult_number',
                     'ac_rate_in_percent', 'origin_link', 'problem_tags')
 
-    list_filter = ('oj', ACRatePercentageFilter, DifficultNumberIntervalFilter)
+    list_filter = ('oj', ACRatePercentageFilter, DifficultNumberIntervalFilter,
+                   AcceptNumberIntervalFilter, ProblemSolvedByTeamFilter, ProblemUnSolvedByTeamFilter)
 
     filter_vertical = ('tags', )
     search_fields = ('problem_tags', )
 
+    actions = [create_record]
+
 
 @admin.register(Member)
 class MemberAdmin(admin.ModelAdmin):
-    pass
+
+    search_fields = ('name', 'nickname')
 
 
 @admin.register(Record)
 class RecordAdmin(admin.ModelAdmin):
-    pass
+
+    list_display = ('team', 'problem', 'create_time')
+
+    autocomplete_fields = ('problem',)
