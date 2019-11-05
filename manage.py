@@ -3,14 +3,9 @@
 import os
 import sys
 
-from ProblemManager.settings import BASE_DIR
 
 def main():
-    if os.path.exists(os.path.join(BASE_DIR, 'ProblemManager/local_settings.py')):
-        settings_path = 'ProblemManager.local_settings'
-    else:
-        settings_path = 'ProblemManager.settings'
-    os.environ.setdefault('DJANGO_SETTINGS_MODULE', settings_path)
+    os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'ProblemManager.local_settings')
     try:
         from django.core.management import execute_from_command_line
     except ImportError as exc:

@@ -48,3 +48,17 @@ class IntervalFilterMixin(admin.SimpleListFilter):
         if val == self.number_of_intervals - 1:
             return queryset.filter(**{self.parameter_name + '__gte': left})
         return queryset.filter(**{self.parameter_name + '__gte': left, self.parameter_name + '__lt': right})
+
+
+class NoAllOptionFilterMixin(admin.SimpleListFilter):
+
+    def choices(self, changelist):
+        from django.utils.encoding import force_text
+        for lookup, title in self.lookup_choices:
+            yield {
+                'selected': self.value() == force_text(lookup),
+                'query_string': changelist.get_query_string({
+                    self.parameter_name: lookup,
+                }, []),
+                'display': title,
+            }

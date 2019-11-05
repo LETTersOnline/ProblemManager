@@ -2,7 +2,8 @@ from django.contrib import admin
 from django.db.models.query import Q
 
 from problem.models import Team, Member, Problem, Record
-from problem.filters import PercentageFilterMixin, IntervalFilterMixin
+from problem.models import ProblemSimilarity
+from problem.filters import PercentageFilterMixin, IntervalFilterMixin, NoAllOptionFilterMixin
 
 
 class ACRatePercentageFilter(PercentageFilterMixin):
@@ -43,18 +44,32 @@ class ProblemSolvedByTeamFilter(admin.SimpleListFilter):
         return queryset.filter(solved_teams__name=self.value())
 
 
-class ProblemUnSolvedByTeamFilter(admin.SimpleListFilter):
+class ProblemUnSolvedByTeamFilter(NoAllOptionFilterMixin):
 
     title = 'Team With Unsolved Problem'
     parameter_name = 'unsolved_teams'
 
     def lookups(self, request, model_admin):
-        return ((team.name, team.name) for team in Team.objects.all())
+        return tuple((team.name, team.name) for team in Team.objects.all()) + (('all', 'all'),)
 
     def queryset(self, request, queryset):
         if self.value() is None:
-            return queryset
+            return queryset.filter(~Q(solved_teams=Team.objects.filter(active=True).first()))
         return queryset.filter(~Q(solved_teams__name=self.value()))
+
+
+class ProblemDuplicateFilter(NoAllOptionFilterMixin):
+
+    title = 'Duplicates Filter'
+    parameter_name = 'duplicates'
+
+    def lookups(self, request, model_admin):
+        return tuple(((True, 'True'), (False, 'False')))
+
+    def queryset(self, request, queryset):
+        if self.value() == 'False':
+            return queryset
+        return queryset.filter(~Q(id__in=ProblemSimilarity.objects.values_list('second_id', flat=True)))
 
 
 def create_record(modeladmin, request, queryset):
@@ -79,7 +94,8 @@ class ProblemAdmin(admin.ModelAdmin):
                     'ac_rate_in_percent', 'origin_link', 'problem_tags')
 
     list_filter = ('oj', ACRatePercentageFilter, DifficultNumberIntervalFilter,
-                   AcceptNumberIntervalFilter, ProblemSolvedByTeamFilter, ProblemUnSolvedByTeamFilter)
+                   AcceptNumberIntervalFilter, ProblemSolvedByTeamFilter, ProblemUnSolvedByTeamFilter,
+                   ProblemDuplicateFilter)
 
     filter_vertical = ('tags', )
     search_fields = ('problem_tags', )
@@ -99,3 +115,9 @@ class RecordAdmin(admin.ModelAdmin):
     list_display = ('team', 'problem', 'create_time')
 
     autocomplete_fields = ('problem',)
+
+
+@admin.register(ProblemSimilarity)
+class ProblemSimilarityAdmin(admin.ModelAdmin):
+
+    list_display = ('first', 'second')
