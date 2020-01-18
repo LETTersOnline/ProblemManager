@@ -8,11 +8,11 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         for problem in Problem.objects.all():
-            # tags = problem.content.get('tags', [])
-            # if tags:
-            #     for tag in tags:
-            #         ins, _ = Tag.objects.get_or_create(name=tag)
-            #         ins.problems.add(problem)
+            tags = problem.content.get('tags', [])
+            if tags:
+                for tag in tags:
+                    ins, _ = Tag.objects.get_or_create(name=tag)
+                    ins.problems.add(problem)
             tags = []
             for tag in problem.tags.all():
                 tags.append(tag.name)
