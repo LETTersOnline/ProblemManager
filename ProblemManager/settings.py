@@ -84,10 +84,10 @@ WSGI_APPLICATION = 'ProblemManager.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'problemmanager',
-        'USER': 'xjw',
-        'PASSWORD': '123456',
-        'HOST': 'localhost',
+        'NAME': 'problem_manager',
+        'USER': 'problem_manager',
+        'PASSWORD': 'problem_manager',
+        'HOST': 'db',
         'PORT': '3306',
         'OPTIONS': {
             # Tell MySQLdb to connect with 'utf8mb4' character set

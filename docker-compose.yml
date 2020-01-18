@@ -1,0 +1,16 @@
+version: '3.3'
+
+services:
+  db:
+    image: mysql:5.7
+    environment:
+    - MYSQL_ROOT_PASSWORD=problem_manager
+    - MYSQL_DATABASE=problem_manager
+    - MYSQL_USER=problem_manager
+    - MYSQL_PASSWORD=problem_manager
+
+  server:
+    build: ./
+    entrypoint: bash ./entrypoint.sh
+    ports:
+    - 80:8000
