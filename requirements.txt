@@ -4,7 +4,7 @@ chardet==3.0.4
 Django==2.2
 django-filter==2.1.0
 django-mysql==3.0.0.post1
-djangorestframework==3.9.2
+djangorestframework==3.11.2
 html5lib==1.0.1
 idna==2.8
 Markdown==3.1
